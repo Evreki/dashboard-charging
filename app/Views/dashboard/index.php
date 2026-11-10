@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'Dashboard Monitoring - Amp Charging ' . ($line ?? 'A')) ?></title>
     
+    <!-- Favicon (Battery Electric Charging Themed) -->
+    <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>" />
+    <link rel="alternate icon" type="image/png" href="<?= base_url('assets/images/favicon-charging.png') ?>" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -15,6 +18,11 @@
         $primaryColor = ($currentLine === 'F') ? '#8b5cf6' : '#0ea5e9';
         $primaryLight = ($currentLine === 'F') ? 'rgba(139, 92, 246, 0.12)' : 'rgba(14, 165, 233, 0.12)';
         $primaryHover = ($currentLine === 'F') ? '#7c3aed' : '#0284c7';
+
+        $cbiLogoPath = FCPATH . 'assets/images/cbi-logo.png';
+        $cbiLogoSrc = is_file($cbiLogoPath) 
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($cbiLogoPath)) 
+            : base_url('assets/images/cbi-logo.png');
     ?>
 
     <style>
@@ -476,14 +484,17 @@
 
     <!-- Main Header -->
     <header>
-        <div class="header-title">
-            <h1>
-                Production Dashboard 
-                <span class="line-badge-hero">Line <?= esc($currentLine) ?></span>
-                <span class="ci4-badge">CI4</span>
-            </h1>
-            <div class="subtitle">
-                Ampere Charging <?= esc($currentLine) ?> Monitoring System &bull; Tabel: <code>z_amp_charging<?= esc($currentLine) ?></code>
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <img src="<?= $cbiLogoSrc ?>" alt="Logo PT Century Batteries Indonesia (CBI)" style="width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));" />
+            <div class="header-title">
+                <h1>
+                    Production Dashboard 
+                    <span class="line-badge-hero">Line <?= esc($currentLine) ?></span>
+                    <span class="ci4-badge">CI4</span>
+                </h1>
+                <div class="subtitle">
+                    PT Century Batteries Indonesia &bull; Ampere Charging <?= esc($currentLine) ?> &bull; Tabel: <code>z_amp_charging<?= esc($currentLine) ?></code>
+                </div>
             </div>
         </div>
         <div class="header-actions">

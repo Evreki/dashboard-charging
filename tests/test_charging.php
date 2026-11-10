@@ -16,15 +16,24 @@ assert(is_array($resF) && count($resF) === 40, 'Result Line F should have 40 dat
 assert(isset($resF[0]['amp']) && isset($resF[0]['voltase']), 'Result Line F should have amp and voltase');
 echo "TEST 2 (ChargingModel Demo Mode Line F): PASSED\n";
 
-// Test 3: Portal Selection Landing Page (index)
+// Test 3: Catalog Selection Page (index)
 $controller = new App\Controllers\Dashboard();
 $portalContent = $controller->index();
-assert(str_contains($portalContent, 'Pilih Lini Charging'), 'Portal should contain Pilih Lini Charging');
-assert(str_contains($portalContent, 'Charging Line A'), 'Portal should contain Charging Line A');
-assert(str_contains($portalContent, 'Charging Line F'), 'Portal should contain Charging Line F');
-assert(str_contains($portalContent, 'z_amp_chargingA'), 'Portal should mention z_amp_chargingA');
-assert(str_contains($portalContent, 'z_amp_chargingF'), 'Portal should mention z_amp_chargingF');
-echo "TEST 3 (Portal Selection View): PASSED\n";
+assert(str_contains($portalContent, 'WETCHARGE'), 'Catalog should contain WETCHARGE');
+assert(str_contains($portalContent, 'WET CHARGING'), 'Catalog should contain WET CHARGING');
+assert(str_contains($portalContent, 'Charging Line A'), 'Catalog should contain Charging Line A');
+assert(str_contains($portalContent, 'Charging Line F'), 'Catalog should contain Charging Line F');
+assert(str_contains($portalContent, 'BUKA DASHBOARD WET A'), 'Catalog should contain button for WET A');
+assert(str_contains($portalContent, 'BUKA DASHBOARD WET F'), 'Catalog should contain button for WET F');
+assert(str_contains($portalContent, 'Kartun Ilustrasi Charging Line A'), 'Catalog should include Line A cartoon illustration');
+assert(str_contains($portalContent, 'Kartun Ilustrasi Charging Line F'), 'Catalog should include Line F cartoon illustration');
+assert(str_contains($portalContent, 'liveClock'), 'Catalog should have digital live clock in top bar');
+assert(!str_contains($portalContent, 'SYSTEM NORMAL'), 'Catalog should not contain SYSTEM NORMAL');
+assert(!str_contains($portalContent, 'DATABASE: SQL SERVER'), 'Catalog should not contain DATABASE: SQL SERVER');
+assert(!str_contains($portalContent, 'HEAVY DUTY — LOW ANTIMONY SERIES'), 'Catalog should not contain HEAVY DUTY series subtitle');
+assert(!str_contains($portalContent, 'MAINTENANCE FREE — HIGH CALCIUM SERIES'), 'Catalog should not contain MAINTENANCE FREE series subtitle');
+assert(str_contains($portalContent, 'PT Century Batteries Indonesia. All rights reserved.'), 'Catalog should have clean simple footer');
+echo "TEST 3 (Direct 2-Card Catalog View): PASSED\n";
 
 // Test 4: Line Dashboard Views (Line A & Line F)
 $lineAContent = $controller->line('A');
@@ -52,4 +61,4 @@ $data = json_decode($body, true);
 assert(is_array($data) && count($data) === 40, 'API response should contain 40 demo points for Line F');
 echo "TEST 5 (API Endpoint for Line F): PASSED\n";
 
-echo "\n>>> ALL LINE A & LINE F CI4 INTEGRATION TESTS PASSED! <<<\n";
+echo "\n>>> ALL 2-CARD CATALOG INTEGRATION TESTS PASSED! <<<\n";

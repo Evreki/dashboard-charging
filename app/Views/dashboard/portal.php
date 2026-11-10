@@ -1,541 +1,325 @@
+<?php
+    $cbiLogoPath = FCPATH . 'assets/images/cbi-logo.png';
+    $cbiLogoSrc = is_file($cbiLogoPath) 
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($cbiLogoPath)) 
+        : base_url('assets/images/cbi-logo.png');
+
+    $lineACartoonPath = FCPATH . 'assets/images/line-a-cartoon.svg';
+    $lineACartoonSrc = is_file($lineACartoonPath)
+        ? 'data:image/svg+xml;base64,' . base64_encode(file_get_contents($lineACartoonPath))
+        : base_url('assets/images/line-a-cartoon.svg');
+
+    $lineFCartoonPath = FCPATH . 'assets/images/line-f-cartoon.svg';
+    $lineFCartoonSrc = is_file($lineFCartoonPath)
+        ? 'data:image/svg+xml;base64,' . base64_encode(file_get_contents($lineFCartoonPath))
+        : base_url('assets/images/line-f-cartoon.svg');
+?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($title ?? 'Portal Monitoring Charging - Line Selection') ?></title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><?= esc($title ?? 'WETCHARGE — Katalog Wet Charging | PT Century Batteries Indonesia') ?></title>
     
+    <!-- Favicon (Battery Electric Charging Themed) -->
+    <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>" />
+    <link rel="alternate icon" type="image/png" href="<?= base_url('assets/images/favicon-charging.png') ?>" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        :root {
-            --bg-color: #0b0f19;
-            --card-bg: rgba(17, 24, 39, 0.75);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --accent-a: #0ea5e9;
-            --accent-a-glow: rgba(14, 165, 233, 0.35);
-            --accent-f: #8b5cf6;
-            --accent-f-glow: rgba(139, 92, 246, 0.35);
-            --success: #10b981;
-            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: var(--font-family);
-        }
-
         body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: relative;
-            overflow-x: hidden;
-            padding: 2.5rem 1.5rem 1.5rem;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
         }
 
-        /* Ambient background glow */
-        body::before {
-            content: '';
-            position: absolute;
-            top: -15%;
-            left: 20%;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, transparent 70%);
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: 0;
-            pointer-events: none;
+        .font-mono-tech {
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        body::after {
-            content: '';
-            position: absolute;
-            top: -10%;
-            right: 15%;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: 0;
-            pointer-events: none;
+        .bg-grid-pattern {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, rgba(226, 232, 240, 0.75) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(226, 232, 240, 0.75) 1px, transparent 1px);
         }
 
-        .container {
-            max-width: 1180px;
-            margin: 0 auto;
-            width: 100%;
-            position: relative;
-            z-index: 1;
+        .text-outline {
+            -webkit-text-stroke: 2px #0047AB;
+            color: transparent;
         }
 
-        /* Top Header */
-        .portal-header {
-            text-align: center;
-            margin-bottom: 3.5rem;
-        }
-
-        .system-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #38bdf8;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 1.25rem;
-            backdrop-filter: blur(12px);
-        }
-
-        .system-pill .dot {
-            width: 7px;
-            height: 7px;
-            background-color: var(--success);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--success);
-            animation: pulse-dot 2s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.8; }
-        }
-
-        .portal-title {
-            font-size: 2.75rem;
-            font-weight: 900;
-            letter-spacing: -0.03em;
-            line-height: 1.15;
-            background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.75rem;
-        }
-
-        .portal-subtitle {
-            font-size: 1.05rem;
-            color: var(--text-secondary);
-            max-width: 650px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        /* Live Clock & Info */
-        .portal-meta {
-            margin-top: 1.25rem;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-        }
-
-        .portal-meta span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* Selection Cards Grid */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .line-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 24px;
-            padding: 2.25rem;
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(20px);
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .line-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            opacity: 0.8;
-            transition: height 0.3s ease, opacity 0.3s ease;
-        }
-
-        /* Line A specific styling */
-        .card-line-a::before {
-            background: linear-gradient(90deg, #0284c7, #38bdf8);
-        }
-        .card-line-a:hover {
-            border-color: rgba(14, 165, 233, 0.4);
-            transform: translateY(-6px);
-            box-shadow: 0 20px 40px -15px var(--accent-a-glow);
-        }
-        .card-line-a .icon-wrapper {
-            background: rgba(14, 165, 233, 0.12);
-            color: #38bdf8;
-            border: 1px solid rgba(14, 165, 233, 0.25);
-        }
-        .card-line-a .badge-line {
-            background: rgba(14, 165, 233, 0.15);
-            color: #38bdf8;
-            border: 1px solid rgba(14, 165, 233, 0.3);
-        }
-        .card-line-a .action-btn {
-            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-            box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
-        }
-        .card-line-a .action-btn:hover {
-            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
-        }
-
-        /* Line F specific styling */
-        .card-line-f::before {
-            background: linear-gradient(90deg, #6d28d9, #a78bfa);
-        }
-        .card-line-f:hover {
-            border-color: rgba(139, 92, 246, 0.4);
-            transform: translateY(-6px);
-            box-shadow: 0 20px 40px -15px var(--accent-f-glow);
-        }
-        .card-line-f .icon-wrapper {
-            background: rgba(139, 92, 246, 0.12);
-            color: #a78bfa;
-            border: 1px solid rgba(139, 92, 246, 0.25);
-        }
-        .card-line-f .badge-line {
-            background: rgba(139, 92, 246, 0.15);
-            color: #a78bfa;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-        }
-        .card-line-f .action-btn {
-            background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
-            box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
-        }
-        .card-line-f .action-btn:hover {
-            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
-        }
-
-        .card-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1.75rem;
-        }
-
-        .icon-wrapper {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.3s ease;
-        }
-
-        .line-card:hover .icon-wrapper {
-            transform: scale(1.08) rotate(3deg);
-        }
-
-        .badge-line {
-            font-size: 0.75rem;
-            font-weight: 800;
-            padding: 4px 12px;
-            border-radius: 50px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .card-content h2 {
-            font-size: 1.75rem;
-            font-weight: 800;
-            color: #ffffff;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.02em;
-        }
-
-        .card-desc {
-            font-size: 0.925rem;
-            color: var(--text-secondary);
-            line-height: 1.55;
-            margin-bottom: 1.75rem;
-        }
-
-        /* Metric Highlights inside cards */
-        .metrics-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.75rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .metric-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .metric-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .metric-val {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .action-btn {
-            width: 100%;
-            padding: 0.85rem 1.5rem;
-            border-radius: 12px;
-            color: #ffffff;
-            font-weight: 700;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.25s ease;
-        }
-
-        .action-btn svg {
-            transition: transform 0.25s ease;
-        }
-
-        .line-card:hover .action-btn svg {
-            transform: translateX(4px);
-        }
-
-        /* Footer */
-        .portal-footer {
-            text-align: center;
-            padding-top: 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-            color: var(--text-muted);
-            font-size: 0.825rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .footer-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-dot-active {
-            width: 8px;
-            height: 8px;
-            background: var(--success);
-            border-radius: 50%;
-        }
-
-        @media (max-width: 860px) {
-            .cards-grid {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
+        @keyframes marquee {
+            0% {
+                transform: translateX(0%);
             }
-            .portal-title {
-                font-size: 2.2rem;
-            }
-            .portal-footer {
-                flex-direction: column;
-                justify-content: center;
+            100% {
+                transform: translateX(-50%);
             }
         }
+
+        .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 35s linear infinite;
+        }
+
+        .animate-marquee:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+            }
+            70% {
+                box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .pulse-emerald {
+            animation: pulse-ring 2s infinite;
+        }
+
+        /* Entrance Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .anim-header { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .anim-card-1 { animation: fadeInUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards; opacity: 0; }
+        .anim-card-2 { animation: fadeInUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; opacity: 0; }
     </style>
 </head>
-<body>
 
-    <div class="container">
+<body class="bg-grid-pattern antialiased selection:bg-blue-700 selection:text-white min-h-screen flex flex-col justify-between">
+
+    <!-- TOP NAVBAR -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80 transition-all duration-200">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <!-- Brand Logo with CBI Official Company Logo -->
+            <a href="<?= site_url('/') ?>" class="flex items-center gap-3.5 group">
+                <img src="<?= $cbiLogoSrc ?>" alt="Logo PT Century Batteries Indonesia (CBI)" class="w-11 h-11 object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-105" />
+                <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-black text-xl tracking-tight leading-none text-slate-900 group-hover:text-[#0047AB] transition">WETCHARGE</span>
+                        <span class="bg-[#0047AB] text-white text-[10px] font-bold px-1.5 py-0.5 rounded tracking-wide font-mono-tech">CBI</span>
+                    </div>
+                    <div class="font-mono-tech text-[10px] tracking-widest text-slate-500 mt-1 font-medium">PT CENTURY BATTERIES INDONESIA</div>
+                </div>
+            </a>
+
+            <!-- Right Controls: Digital Realtime Clock -->
+            <div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200 font-mono-tech text-xs text-slate-700 shadow-sm">
+                <svg class="w-4 h-4 text-[#0047AB]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span id="liveClock" class="font-bold tracking-wider text-slate-800 text-xs sm:text-sm">--:--:-- WIB</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CATALOG CONTAINER -->
+    <main class="max-w-7xl mx-auto px-6 py-10 lg:py-14 w-full flex-grow flex flex-col justify-center">
         
-        <!-- Header -->
-        <header class="portal-header">
-            <div class="system-pill">
-                <span class="dot"></span>
-                <span>Production Monitoring Center</span>
+        <!-- Header Title Section -->
+        <div class="text-center max-w-3xl mx-auto mb-10 anim-header">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm mb-4">
+                <span class="w-2 h-2 rounded-full bg-[#0047AB]"></span>
+                <span class="font-mono-tech text-xs tracking-wider text-slate-700 font-semibold">PORTAL APLIKASI WET CHARGING</span>
             </div>
-            <h1 class="portal-title">Pilih Lini Charging</h1>
-            <p class="portal-subtitle">
-                Sistem pemantauan terpusat untuk menganalisis performa pengisian arus (Ampere), tegangan (Voltase), dan status sirkuit secara realtime.
+
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] text-slate-900 mb-4">
+                WET CHARGING <span class="text-outline">PORTAL</span>
+            </h1>
+
+            <p class="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
+                Pintu masuk aplikasi monitoring wet charging PT Century Batteries Indonesia. Pilih katalog lini formasi di bawah untuk membuka dashboard sirkuit secara realtime.
             </p>
-            <div class="portal-meta">
-                <span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span id="liveClock">Memuat waktu...</span>
-                </span>
-                <span>•</span>
-                <span>Database: SQL Server (prod_control)</span>
-            </div>
-        </header>
+        </div>
 
-        <!-- Selection Cards -->
-        <div class="cards-grid">
+        <!-- 2 DIRECT CATALOG CARDS: WET A & WET F -->
+        <div class="grid md:grid-cols-2 gap-8 lg:gap-10 max-w-5xl mx-auto w-full">
             
-            <!-- Card 1: Charging Line A -->
-            <a href="<?= site_url('charging/a') ?>" class="line-card card-line-a">
+            <!-- KATALOG 1: WET A -->
+            <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group anim-card-1">
                 <div>
-                    <div class="card-top">
-                        <div class="icon-wrapper">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect>
-                                <line x1="22" y1="11" x2="22" y2="13"></line>
-                                <polyline points="9 10 7 13 11 13 9 16"></polyline>
-                            </svg>
+                    <!-- Visual Cartoon Banner (Line A) -->
+                    <div class="relative h-64 bg-slate-100 overflow-hidden">
+                        <img src="<?= $lineACartoonSrc ?>"
+                            alt="Kartun Ilustrasi Charging Line A" 
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
+                        
+                        <!-- Badges on Image -->
+                        <div class="absolute top-4 left-4 flex items-center gap-2">
+                            <span class="bg-[#0047AB] text-white font-mono-tech text-xs font-bold px-3.5 py-1.5 rounded-lg shadow-sm">
+                                TIPE A
+                            </span>
+                            <span class="bg-white/95 backdrop-blur-md text-slate-800 font-mono-tech text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200/80 shadow-sm">
+                                110 Sirkuit
+                            </span>
                         </div>
-                        <span class="badge-line">Unit Line A</span>
+
+                        <div class="absolute bottom-4 right-4 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-slate-200/80 text-right shadow-sm">
+                            <span class="font-mono-tech text-[10px] text-slate-500 uppercase tracking-wider block">Target SG</span>
+                            <span class="font-mono-tech text-xs font-bold text-slate-900">1.260 @ 20°C</span>
+                        </div>
                     </div>
 
-                    <div class="card-content">
-                        <h2>Charging Line A</h2>
-                        <p class="card-desc">
-                            Monitoring realtime arus dan tegangan sirkuit untuk Line Charging A. Dilengkapi dengan mode histori dan inspeksi interval.
-                        </p>
-                    </div>
+                    <!-- Card Body -->
+                    <div class="p-8">
+                        <h2 class="text-3xl font-black text-slate-900 group-hover:text-[#0047AB] transition mb-6">
+                            Charging Line A
+                        </h2>
 
-                    <div class="metrics-row">
-                        <div class="metric-item">
-                            <span class="metric-label">Tabel</span>
-                            <span class="metric-val" style="color: #38bdf8;">z_amp_chargingA</span>
-                        </div>
-                        <div class="metric-item">
-                            <span class="metric-label">Sirkuit</span>
-                            <span class="metric-val">1 - 110 ID</span>
-                        </div>
-                        <div class="metric-item">
-                            <span class="metric-label">Update</span>
-                            <span class="metric-val" style="color: var(--success);">Tiap 3 Detik</span>
+                        <!-- Tech Specs Grid -->
+                        <div class="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 font-mono-tech text-xs">
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Arus Awal</span>
+                                <span class="font-bold text-slate-900 text-sm mt-0.5 block">12.5 A</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Waktu Formasi</span>
+                                <span class="font-bold text-slate-900 text-sm mt-0.5 block">18–24 Jam</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Metode Charge</span>
+                                <span class="font-semibold text-slate-800 text-xs mt-0.5 block">CC Multi-Step</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Batas Suhu</span>
+                                <span class="font-bold text-slate-900 text-sm mt-0.5 block">&lt; 45 °C</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="action-btn">
-                    <span>Buka Dashboard Line A</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
+                <!-- Card Action Footer -->
+                <div class="px-8 pb-8 pt-2">
+                    <a href="<?= site_url('charging/a') ?>"
+                        class="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#0047AB] text-white font-mono-tech text-xs font-bold tracking-wider hover:bg-blue-800 transition-all duration-200 shadow-md hover:shadow-xl hover:shadow-blue-500/25 active:scale-[0.98]">
+                        <span>BUKA DASHBOARD WET A</span>
+                        <span class="text-sm transition-transform duration-200 group-hover:translate-x-1.5">➔</span>
+                    </a>
                 </div>
-            </a>
+            </div>
 
-            <!-- Card 2: Charging Line F -->
-            <a href="<?= site_url('charging/f') ?>" class="line-card card-line-f">
+            <!-- KATALOG 2: WET F -->
+            <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group anim-card-2">
                 <div>
-                    <div class="card-top">
-                        <div class="icon-wrapper">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                            </svg>
+                    <!-- Visual Cartoon Banner (Line F) -->
+                    <div class="relative h-64 bg-slate-900 overflow-hidden">
+                        <img src="<?= $lineFCartoonSrc ?>"
+                            alt="Kartun Ilustrasi Charging Line F" 
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
+                        
+                        <!-- Badges on Image -->
+                        <div class="absolute top-4 left-4 flex items-center gap-2">
+                            <span class="bg-indigo-950 text-indigo-300 border border-indigo-500/30 font-mono-tech text-xs font-bold px-3.5 py-1.5 rounded-lg shadow-sm">
+                                TIPE F
+                            </span>
+                            <span class="bg-white/95 backdrop-blur-md text-slate-800 font-mono-tech text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200/80 shadow-sm">
+                                110 Sirkuit
+                            </span>
                         </div>
-                        <span class="badge-line">Unit Line F</span>
+
+                        <div class="absolute bottom-4 right-4 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-slate-200/80 text-right shadow-sm">
+                            <span class="font-mono-tech text-[10px] text-slate-500 uppercase tracking-wider block">Target SG</span>
+                            <span class="font-mono-tech text-xs font-bold text-slate-900">1.280 @ 20°C</span>
+                        </div>
                     </div>
 
-                    <div class="card-content">
-                        <h2>Charging Line F</h2>
-                        <p class="card-desc">
-                            Monitoring realtime arus dan tegangan sirkuit untuk Line Charging F. Pemantauan terisolasi dengan data langsung dari unit F.
-                        </p>
-                    </div>
+                    <!-- Card Body -->
+                    <div class="p-8">
+                        <h2 class="text-3xl font-black text-slate-900 group-hover:text-blue-700 transition mb-6">
+                            Charging Line F
+                        </h2>
 
-                    <div class="metrics-row">
-                        <div class="metric-item">
-                            <span class="metric-label">Tabel</span>
-                            <span class="metric-val" style="color: #a78bfa;">z_amp_chargingF</span>
-                        </div>
-                        <div class="metric-item">
-                            <span class="metric-label">Sirkuit</span>
-                            <span class="metric-val">1 - 110 ID</span>
-                        </div>
-                        <div class="metric-item">
-                            <span class="metric-label">Update</span>
-                            <span class="metric-val" style="color: var(--success);">Tiap 3 Detik</span>
+                        <!-- Tech Specs Grid -->
+                        <div class="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 font-mono-tech text-xs">
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Arus Fase 1</span>
+                                <span class="font-bold text-slate-900 text-sm mt-0.5 block">15.0 A</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Waktu Formasi</span>
+                                <span class="font-bold text-slate-900 text-sm mt-0.5 block">12–16 Jam</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Metode Charge</span>
+                                <span class="font-semibold text-slate-800 text-xs mt-0.5 block">Fast 3-Phase CC/CV</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Batas Suhu</span>
+                                <span class="font-bold text-slate-900 text-sm mt-0.5 block">&lt; 42 °C</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="action-btn">
-                    <span>Buka Dashboard Line F</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
+                <!-- Card Action Footer -->
+                <div class="px-8 pb-8 pt-2">
+                    <a href="<?= site_url('charging/f') ?>"
+                        class="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-slate-900 text-white font-mono-tech text-xs font-bold tracking-wider hover:bg-slate-800 transition-all duration-200 shadow-md hover:shadow-xl hover:shadow-slate-800/25 active:scale-[0.98]">
+                        <span>BUKA DASHBOARD WET F</span>
+                        <span class="text-sm transition-transform duration-200 group-hover:translate-x-1.5">➔</span>
+                    </a>
                 </div>
-            </a>
+            </div>
 
         </div>
 
-        <!-- Footer -->
-        <footer class="portal-footer">
-            <div class="footer-status">
-                <span class="status-dot-active"></span>
-                <span>Production Server Active &bull; CodeIgniter v<?= CodeIgniter\CodeIgniter::CI_VERSION ?></span>
-            </div>
-            <div>
-                <span>&copy; <?= date('Y') ?> Production Charging Control System</span>
-            </div>
-        </footer>
+    </main>
 
-    </div>
+    <!-- FOOTER (SIMPLE & CLEAN) -->
+    <footer class="bg-slate-900 text-slate-300 py-6 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono-tech text-xs">
+            <div class="flex items-center gap-3">
+                <div class="bg-white p-1 rounded-md shadow-sm">
+                    <img src="<?= $cbiLogoSrc ?>" alt="Logo PT Century Batteries Indonesia" class="w-6 h-6 object-contain" />
+                </div>
+                <span class="font-bold text-white tracking-wide">PT CENTURY BATTERIES INDONESIA</span>
+            </div>
+            <div class="text-slate-400">
+                &copy; <?= date('Y') ?> PT Century Batteries Indonesia. All rights reserved.
+            </div>
+        </div>
+    </footer>
 
+    <!-- DIGITAL CLOCK SCRIPT -->
     <script>
-        // Update Live Clock
         function updateClock() {
+            const el = document.getElementById('liveClock');
+            if (!el) return;
             const now = new Date();
-            const options = { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric',
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit' 
-            };
-            document.getElementById('liveClock').textContent = now.toLocaleDateString('id-ID', options);
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            el.textContent = `${hours}:${minutes}:${seconds} WIB`;
         }
-        updateClock();
         setInterval(updateClock, 1000);
+        updateClock();
     </script>
 </body>
+
 </html>
