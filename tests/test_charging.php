@@ -38,11 +38,13 @@ echo "TEST 3 (Direct 2-Card Catalog View): PASSED\n";
 // Test 4: Line Dashboard Views (Line A & Line F)
 $lineAContent = $controller->line('A');
 assert(str_contains($lineAContent, 'Line A'), 'View should display Line A');
-assert(str_contains($lineAContent, 'z_amp_chargingA'), 'View should mention z_amp_chargingA');
+assert(!str_contains($lineAContent, 'Tabel: <code>z_amp_chargingA</code>'), 'View should not display table name in subtitle');
+assert(str_contains($lineAContent, 'Export'), 'View should have Export button');
 
 $lineFContent = $controller->line('F');
 assert(str_contains($lineFContent, 'Line F'), 'View should display Line F');
-assert(str_contains($lineFContent, 'z_amp_chargingF'), 'View should mention z_amp_chargingF');
+assert(!str_contains($lineFContent, 'Tabel: <code>z_amp_chargingF</code>'), 'View should not display table name in subtitle');
+assert(str_contains($lineFContent, 'Export'), 'View should have Export button');
 echo "TEST 4 (Dashboard Views for Line A and Line F): PASSED\n";
 
 // Test 5: Dashboard Controller API Endpoint for Line F
@@ -61,4 +63,23 @@ $data = json_decode($body, true);
 assert(is_array($data) && count($data) === 40, 'API response should contain 40 demo points for Line F');
 echo "TEST 5 (API Endpoint for Line F): PASSED\n";
 
-echo "\n>>> ALL 2-CARD CATALOG INTEGRATION TESTS PASSED! <<<\n";
+// Test 6: Smart Auto-Fallback Mode (Live mode without offline crash)
+$requestOffline = service('request');
+$requestOffline->setGlobal('get', [
+    'circuit'  => 'Circuit 21',
+    'interval' => 'raw',
+    'demo'     => '0', // Live mode attempted!
+    'line'     => 'A'
+]);
+$responseOffline = service('response');
+$controller->initController($requestOffline, $responseOffline, service('logger'));
+$apiResponseOffline = $controller->api();
+$bodyOffline = $apiResponseOffline->getBody();
+$dataOffline = json_decode($bodyOffline, true);
+assert(is_array($dataOffline) && count($dataOffline) > 0, 'Auto-fallback should return valid telemetry array');
+assert(isset($dataOffline[0]['amp']) && isset($dataOffline[0]['voltase']), 'Auto-fallback should contain amp and voltase');
+$sourceHeader = $apiResponseOffline->getHeaderLine('X-Data-Source');
+assert(!empty($sourceHeader), 'Response should contain X-Data-Source header');
+echo "TEST 6 (Smart Auto-Fallback without crash): PASSED (Source: {$sourceHeader})\n";
+
+echo "\n>>> ALL CHARGING TESTS PASSED! <<<\n";

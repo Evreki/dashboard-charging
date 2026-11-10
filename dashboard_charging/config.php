@@ -5,7 +5,7 @@ $serverName = "10.19.16.21";
 $connectionInfo = array(
     "Database" => "prod_control",
     "UID" => "sql_pre",
-    "PWD" => "User@eng1", // <-- Ganti tulisan ini dengan password asli Anda
+    "PWD" => "", // Masukkan password di .env atau konfigurasi server lokal
     "CharacterSet" => "UTF-8"
 );
 

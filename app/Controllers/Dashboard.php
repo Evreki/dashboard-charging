@@ -85,6 +85,10 @@ class Dashboard extends BaseController
         $model  = new ChargingModel();
         $result = $model->getChargingData($circuit, $intervalStr, $startStr, $endStr, $isDemo, $line);
 
-        return $this->response->setJSON($result);
+        return $this->response
+            ->setHeader('X-Data-Source', $model->lastSource)
+            ->setHeader('X-DB-Connected', $model->isDbConnected ? '1' : '0')
+            ->setHeader('X-DB-Message', rawurlencode($model->lastMessage ?? ''))
+            ->setJSON($result);
     }
 }

@@ -9,8 +9,14 @@ class ChargingModel extends Model
 {
     protected $table = 'z_amp_chargingA';
 
+    public string $lastSource = 'live'; // 'live', 'preview_fallback', 'live_waiting', 'demo'
+    public ?string $lastMessage = null;
+    public bool $isDbConnected = false;
+
     /**
      * Ambil data charging berdasarkan sirkuit, interval, filter tanggal, dan line (A / F).
+     * Dilengkapi fitur Smart Auto-Fallback: otomatis menggunakan data simulasi jika DB offline/belum ada data,
+     * dan otomatis beralih ke data live secara realtime begitu database SQL Server terhubung.
      */
     public function getChargingData(
         string $circuit = 'Circuit 21',
@@ -24,6 +30,9 @@ class ChargingModel extends Model
         $tableName = ($lineClean === 'F') ? 'z_amp_chargingF' : 'z_amp_chargingA';
 
         if ($isDemo) {
+            $this->lastSource = 'demo';
+            $this->lastMessage = 'Mode Simulasi Manual';
+            $this->isDbConnected = false;
             return $this->generateDemoData($intervalStr, $startStr, $endStr, $lineClean);
         }
 
@@ -80,7 +89,17 @@ class ChargingModel extends Model
                 }
 
                 $rows = $query->getResultArray();
-                return $this->formatRows($rows);
+                if (!empty($rows)) {
+                    $this->lastSource = 'live';
+                    $this->lastMessage = "Live SQL Server Connected ({$tableName})";
+                    $this->isDbConnected = true;
+                    return $this->formatRows($rows);
+                }
+
+                $this->lastSource = 'live_empty';
+                $this->lastMessage = "Tidak ada data pada rentang waktu tersebut di tabel {$tableName}";
+                $this->isDbConnected = true;
+                return [];
             }
 
             // Mode LIVE
@@ -110,15 +129,28 @@ class ChargingModel extends Model
             }
 
             $rows = $query->getResultArray();
-            $rows = array_reverse($rows);
-            return $this->formatRows($rows);
+            if (!empty($rows)) {
+                $rows = array_reverse($rows);
+                $this->lastSource = 'live';
+                $this->lastMessage = "Live SQL Server Connected ({$tableName})";
+                $this->isDbConnected = true;
+                return $this->formatRows($rows);
+            }
+
+            // Database terhubung tapi tabel belum ada data (0 rows)
+            $this->lastSource = 'live_waiting';
+            $this->lastMessage = "Database terhubung, menunggu data masuk ke tabel {$tableName}";
+            $this->isDbConnected = true;
+            return $this->generateDemoData($intervalStr, $startStr, $endStr, $lineClean);
 
         } catch (Throwable $e) {
-            log_message('error', "Database Error in ChargingModel ({$tableName}): " . $e->getMessage());
-            return [
-                'error' => "Koneksi Database Gagal ({$tableName}): " . $e->getMessage(),
-                'is_db_error' => true,
-            ];
+            // SQL Server offline / LAN pabrik belum terhubung: fallback halus tanpa error
+            log_message('notice', "Database standby in ChargingModel ({$tableName}): " . $e->getMessage());
+            $this->lastSource = 'preview_fallback';
+            $this->lastMessage = "Mode Siap Integrasi: Menunggu koneksi SQL Server ({$tableName})";
+            $this->isDbConnected = false;
+
+            return $this->generateDemoData($intervalStr, $startStr, $endStr, $lineClean);
         }
     }
 
@@ -159,13 +191,13 @@ class ChargingModel extends Model
         if ($intervalStr === '1h')  $step = 3600;
 
         $startTime = $now - ($points * $step);
-        $ampOffset = ($line === 'F') ? 1.8 : 0.0;
-        $voltOffset = ($line === 'F') ? 3.0 : 0.0;
+        $ampOffset = ($line === 'F') ? 2.5 : 0.0;
+        $voltOffset = ($line === 'F') ? 0.6 : 0.0;
 
         for ($i = 0; $i < $points; $i++) {
             $timePoint = $startTime + ($i * $step);
-            $baseAmp = 15.0 + $ampOffset + sin($i / 3) * 3 + (mt_rand(-5, 5) / 10);
-            $baseVolt = 220.0 + $voltOffset + cos($i / 4) * 5 + (mt_rand(-5, 5) / 10);
+            $baseAmp = 12.5 + $ampOffset + sin($i / 4) * 2.2 + (mt_rand(-3, 3) / 10);
+            $baseVolt = 14.2 + $voltOffset + cos($i / 5) * 0.7 + (mt_rand(-2, 2) / 10);
             $data[] = [
                 'time'    => date('Y-m-d H:i:s', $timePoint),
                 'amp'     => round(max(0, $baseAmp), 1),

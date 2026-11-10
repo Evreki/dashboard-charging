@@ -12,6 +12,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <!-- jsPDF for direct PDF Report Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <?php 
         $currentLine = strtoupper($line ?? 'A');
@@ -303,6 +305,52 @@
             background-color: #f1f5f9;
         }
 
+        .btn-export {
+            background-color: #059669;
+            color: white;
+            box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2);
+        }
+
+        .btn-export:hover {
+            background-color: #047857;
+            transform: translateY(-1px);
+        }
+
+        .export-dropdown-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .export-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            min-width: 250px;
+            z-index: 1000;
+            padding: 6px;
+        }
+
+        .export-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #334155;
+            font-size: 0.85rem;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+
+        .export-item:hover {
+            background-color: #f8fafc;
+        }
+
         .btn-demo {
             background: rgba(245, 158, 11, 0.15);
             border: 1px solid rgba(245, 158, 11, 0.35);
@@ -468,18 +516,6 @@
             </svg>
             <span>Kembali ke Portal Pemilihan</span>
         </a>
-
-        <!-- Fast Switcher between Line A and Line F -->
-        <div class="line-switcher">
-            <a href="<?= site_url('charging/a') ?>" class="line-tab <?= ($currentLine === 'A') ? 'active-a' : '' ?>">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="16" height="10" rx="2"></rect><line x1="22" y1="11" x2="22" y2="13"></line></svg>
-                <span>Charging Line A</span>
-            </a>
-            <a href="<?= site_url('charging/f') ?>" class="line-tab <?= ($currentLine === 'F') ? 'active-f' : '' ?>">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                <span>Charging Line F</span>
-            </a>
-        </div>
     </div>
 
     <!-- Main Header -->
@@ -493,7 +529,7 @@
                     <span class="ci4-badge">CI4</span>
                 </h1>
                 <div class="subtitle">
-                    PT Century Batteries Indonesia &bull; Ampere Charging <?= esc($currentLine) ?> &bull; Tabel: <code>z_amp_charging<?= esc($currentLine) ?></code>
+                    PT Century Batteries Indonesia &bull; Ampere & Voltase Charging <?= esc($currentLine) ?>
                 </div>
             </div>
         </div>
@@ -557,6 +593,42 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                     Terapkan Filter
                 </button>
+                <!-- Export Dropdown -->
+                <div class="export-dropdown-wrapper">
+                    <button class="btn btn-export" onclick="toggleExportMenu(event)" id="btnExportMenu" title="Export Laporan PDF, Gambar Grafik, atau CSV">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Export</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    
+                    <div id="exportDropdown" class="export-dropdown-menu" style="display: none;">
+                        <div onclick="exportPDF()" class="export-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                            <div>
+                                <div style="font-weight: 600; color: #1e293b;">Export Laporan PDF</div>
+                                <div style="font-size: 0.72rem; color: #64748b;">Grafik & Rincian Telemetri</div>
+                            </div>
+                        </div>
+                        <div onclick="exportPNG()" class="export-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            <div>
+                                <div style="font-weight: 600; color: #1e293b;">Download Gambar (PNG)</div>
+                                <div style="font-size: 0.72rem; color: #64748b;">File Gambar Grafik HD</div>
+                            </div>
+                        </div>
+                        <div onclick="exportData()" class="export-item" style="border-top: 1px solid #f1f5f9; margin-top: 4px; padding-top: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
+                            <div>
+                                <div style="font-weight: 600; color: #1e293b;">Export Data (CSV / Excel)</div>
+                                <div style="font-size: 0.72rem; color: #64748b;">Dataset Tabel Mentah</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <button class="btn btn-outline" onclick="resetToLive()" id="btnReset" style="display: none;">
                     Kembali ke Live
                 </button>
@@ -632,6 +704,157 @@
         let isLiveMode = true;
         let fetchIntervalId = null;
         let isDemoMode = false;
+        let currentLoadedData = [];
+
+        function toggleExportMenu(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('exportDropdown');
+            menu.style.display = (menu.style.display === 'none' || !menu.style.display) ? 'block' : 'none';
+        }
+
+        function closeExportMenu() {
+            const menu = document.getElementById('exportDropdown');
+            if (menu) menu.style.display = 'none';
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.export-dropdown-wrapper')) {
+                closeExportMenu();
+            }
+        });
+
+        async function exportPNG() {
+            closeExportMenu();
+            try {
+                const activeCircuit = document.getElementById('circuit').value || 'Circuit';
+                const safeCircuitName = activeCircuit.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                const dateStr = new Date().toISOString().slice(0, 10);
+                
+                const dataURI = await chart.dataURI();
+                const link = document.createElement('a');
+                link.href = dataURI.imgURI;
+                link.download = `grafik_charging_line_${CURRENT_LINE.toLowerCase()}_${safeCircuitName}_${dateStr}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (e) {
+                console.error('Export PNG failed:', e);
+                alert('Gagal mendownload gambar grafik: ' + e.message);
+            }
+        }
+
+        async function exportPDF() {
+            closeExportMenu();
+            try {
+                const activeCircuit = document.getElementById('circuit').value || 'Circuit';
+                const safeCircuitName = activeCircuit.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                const now = new Date();
+                const dateStr = now.toISOString().slice(0, 10);
+                const timeStr = now.toLocaleTimeString('id-ID');
+
+                const voltText = document.getElementById('currentVoltase')?.innerText || '--';
+                const ampText = document.getElementById('currentAmp')?.innerText || '--';
+                const statusText = document.getElementById('currentStatusText')?.innerText || 'Active Charging';
+
+                // Ambil gambar canvas grafik dari ApexCharts
+                const { imgURI } = await chart.dataURI();
+
+                if (window.jspdf && window.jspdf.jsPDF) {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+                    // Header bar biru CBI
+                    doc.setFillColor(0, 71, 171); // #0047AB Royal Blue
+                    doc.rect(0, 0, 297, 18, 'F');
+
+                    // Header Text
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(13);
+                    doc.setTextColor(255, 255, 255);
+                    doc.text('PT CENTURY BATTERIES INDONESIA', 14, 12);
+                    
+                    doc.setFontSize(9.5);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`WET CHARGING MONITORING SYSTEM - LINE ${CURRENT_LINE}`, 190, 12);
+
+                    // Judul Laporan & Metadata
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(14);
+                    doc.setTextColor(15, 23, 42); // slate-900
+                    doc.text(`LAPORAN GRAFIK TELEMETRI: LINE ${CURRENT_LINE} - ${activeCircuit.toUpperCase()}`, 14, 28);
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9.5);
+                    doc.setTextColor(71, 85, 105); // slate-600
+                    doc.text(`Waktu Cetak: ${now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} pk ${timeStr} WIB`, 14, 34);
+
+                    // Metrik Telemetri Terakhir
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(10);
+                    doc.setTextColor(0, 71, 171);
+                    doc.text(`Ampere Terakhir: ${ampText} A`, 14, 42);
+                    doc.setTextColor(16, 185, 129); // green
+                    doc.text(`Voltase Terakhir: ${voltText} V`, 75, 42);
+                    doc.setTextColor(15, 23, 42);
+                    doc.text(`Status Charging: ${statusText}`, 140, 42);
+
+                    // Garis Pembatas
+                    doc.setDrawColor(226, 232, 240);
+                    doc.line(14, 46, 283, 46);
+
+                    // Sisipkan Gambar Grafik Resolusi Tinggi
+                    doc.addImage(imgURI, 'PNG', 14, 50, 269, 135);
+
+                    // Footer Dokumen
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.setTextColor(148, 163, 184);
+                    doc.text(`Internal Production Monitoring System - PT Century Batteries Indonesia (Hal 1/1)`, 14, 198);
+
+                    doc.save(`laporan_grafik_charging_line_${CURRENT_LINE.toLowerCase()}_${safeCircuitName}_${dateStr}.pdf`);
+                } else {
+                    window.print();
+                }
+            } catch (e) {
+                console.error('Export PDF failed:', e);
+                alert('Gagal membuat file PDF: ' + e.message);
+            }
+        }
+
+        function exportData() {
+            closeExportMenu();
+            if (!currentLoadedData || currentLoadedData.length === 0) {
+                alert("Tidak ada data charging yang tersedia untuk diekspor.");
+                return;
+            }
+
+            const activeCircuit = document.getElementById('circuit').value || 'Circuit';
+            
+            // Format CSV
+            let csv = "Waktu,Line,Circuit ID,Ampere (A),Voltase (V),Status Charging\r\n";
+
+            currentLoadedData.forEach(item => {
+                const statusInfo = getStatusInfo(item.amp, item.voltase);
+                const timeStr = item.time || '';
+                const ampVal = (item.amp !== null && item.amp !== undefined) ? parseFloat(item.amp).toFixed(1) : '0.0';
+                const voltVal = (item.voltase !== null && item.voltase !== undefined) ? parseFloat(item.voltase).toFixed(1) : '0.0';
+                
+                csv += `"${timeStr}","Line ${CURRENT_LINE}","${activeCircuit}","${ampVal}","${voltVal}","${statusInfo.status}"\r\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const safeCircuitName = activeCircuit.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const nowStr = new Date().toISOString().slice(0, 10);
+
+            link.setAttribute("href", url);
+            link.setAttribute("download", `charging_line_${CURRENT_LINE.toLowerCase()}_${safeCircuitName}_${nowStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
 
         function toggleDemoMode() {
             isDemoMode = !isDemoMode;
@@ -787,25 +1010,62 @@
                 const response = await fetch(API_BASE_URL + params);
                 const result = await response.json();
                 
-                if (result.error) {
+                const dataSource = response.headers.get('X-Data-Source') || (isDemoMode ? 'demo' : 'live');
+                const rawMsg = response.headers.get('X-DB-Message');
+                const dbMessage = rawMsg ? decodeURIComponent(rawMsg) : '';
+                
+                // Update status indicators
+                const liveBadge = document.getElementById('liveIndicator');
+                const chartSub = document.getElementById('chartSubtitle');
+
+                if (dataSource === 'live') {
+                    if (liveBadge && isLiveMode) {
+                        liveBadge.innerHTML = '<div class="pulse-dot" style="background:#10b981;"></div><span style="color:#059669; font-weight:700;">Live SQL Server</span>';
+                        liveBadge.style.background = 'rgba(16, 185, 129, 0.12)';
+                        liveBadge.style.borderColor = 'rgba(16, 185, 129, 0.35)';
+                    }
+                    if (chartSub && isLiveMode) {
+                        chartSub.innerText = 'Live terhubung ke SQL Server';
+                    }
+                } else if (dataSource === 'preview_fallback' || dataSource === 'live_waiting') {
+                    if (liveBadge && isLiveMode && !isDemoMode) {
+                        liveBadge.innerHTML = '<div class="pulse-dot" style="background:#f59e0b;"></div><span style="color:#d97706; font-weight:700;">Siap Integrasi (Standby)</span>';
+                        liveBadge.style.background = 'rgba(245, 158, 11, 0.12)';
+                        liveBadge.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+                    }
+                    if (chartSub && isLiveMode && !isDemoMode) {
+                        chartSub.innerText = 'Menampilkan data telemetri real-time terakhir';
+                    }
+                } else if (isDemoMode) {
+                    if (liveBadge) {
+                        liveBadge.innerHTML = '<div class="pulse-dot" style="background:#0284c7;"></div><span style="color:#0284c7; font-weight:700;">Mode Simulasi Manual</span>';
+                        liveBadge.style.background = 'rgba(2, 132, 199, 0.12)';
+                        liveBadge.style.borderColor = 'rgba(2, 132, 199, 0.35)';
+                    }
+                }
+
+                if (result.error && !Array.isArray(result)) {
                     showError(result.error);
                     updateStatusDisplay(null, null);
                     return;
                 }
 
-                if (Array.isArray(result) && result.length > 0) {
+                const rows = Array.isArray(result) ? result : (result.data || []);
+                currentLoadedData = rows;
+
+                if (rows.length > 0) {
                     document.getElementById('errorMsg').style.display = 'none';
                     
-                    const chartDataAmp = result.map(item => [new Date(item.time).getTime(), item.amp]);
-                    const chartDataVolt = result.map(item => [new Date(item.time).getTime(), item.voltase]);
+                    const chartDataAmp = rows.map(item => [new Date(item.time).getTime(), item.amp]);
+                    const chartDataVolt = rows.map(item => [new Date(item.time).getTime(), item.voltase]);
                     
                     chart.updateSeries([
                         { name: 'Ampere', data: chartDataAmp },
                         { name: 'Voltase', data: chartDataVolt }
                     ]);
 
-                    const latestAmp = result[result.length - 1].amp;
-                    const latestVolt = result[result.length - 1].voltase;
+                    const latestAmp = rows[rows.length - 1].amp;
+                    const latestVolt = rows[rows.length - 1].voltase;
                     
                     const elCurrent = document.getElementById('currentAmp');
                     const elVolt = document.getElementById('currentVoltase');
@@ -825,12 +1085,12 @@
                     document.getElementById('currentAmp').innerText = '--';
                     document.getElementById('currentVoltase').innerText = '--';
                     updateStatusDisplay(null, null);
-                    showError("Tidak ada data pada rentang waktu / Circuit tersebut.");
+                    if (!isLiveMode) {
+                        showError("Tidak ada data pada rentang waktu / Circuit tersebut.");
+                    }
                 }
             } catch (error) {
-                showError("Gagal mengambil data dari server: " + error.message);
-                updateStatusDisplay(null, null);
-                console.error(error);
+                console.warn("Auto-detect polling:", error);
             }
         }
 

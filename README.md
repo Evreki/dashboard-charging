@@ -49,10 +49,10 @@ Dashboard Monitoring Ampere Charging (Line A & Line F) berbasis **CodeIgniter 4 
    CI_ENVIRONMENT = development
    app.baseURL = 'http://localhost/dashboard_charging/public/'
    
-   database.default.hostname = 10.19.16.21
-   database.default.database = prod_control
-   database.default.username = sql_pre
-   database.default.password = User@eng1
+   database.default.hostname = your_sql_server_ip
+   database.default.database = your_database_name
+   database.default.username = your_username
+   database.default.password = your_password
    database.default.DBDriver = SQLSRV
    database.default.port = 1433
    ```
