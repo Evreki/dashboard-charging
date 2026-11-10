@@ -1,9 +1,11 @@
 # dashboard-charging
 
-Dashboard Monitoring Ampere Charging A berbasis **CodeIgniter 4 (CI4)** dengan visualisasi grafik interaktif menggunakan **ApexCharts**.
+Dashboard Monitoring Ampere Charging (Line A & Line F) berbasis **CodeIgniter 4 (CI4)** dengan visualisasi grafik interaktif menggunakan **ApexCharts** dan portal pemilihan lini yang modern.
 
 ## 📌 Fitur Utama
+- **Portal Pemilihan Lini (Modern Hub UI/UX)**: Halaman portal pilihan interaktif untuk mengakses **Charging Line A** dan **Charging Line F**.
 - **Realtime Live Monitoring**: Pemantauan grafik Ampere dan Voltase secara berkala (auto-refresh tiap 3 detik).
+- **Fast Line Switcher**: Navigasi cepat berganti antara Line A dan Line F langsung dari dalam dashboard.
 - **Historical Analysis**: Filter data berdasarkan rentang tanggal/jam dan resolusi interval (Raw, 1m, 10m, 30m, 1h).
 - **Status Charging Pintar**:
   - 🟢 **Active Charging**: Ampere dan Voltase aktif terbaca.
@@ -11,6 +13,16 @@ Dashboard Monitoring Ampere Charging A berbasis **CodeIgniter 4 (CI4)** dengan v
   - 🔴 **Off Charging**: Tidak ada arus atau tegangan terbaca.
 - **Circuit Selector**: Navigasi cepat untuk 10 Circuit terupdate (prioritas aktif) serta pilihan lengkap Circuit 1 - 110.
 - **Simulasi / Demo Mode**: Mode preview data simulasi saat server offline / tidak terhubung ke LAN SQL Server.
+
+## 🗄️ Sumber Tabel Database SQL Server
+- **Charging Line A**: `[prod_control].[dbo].[z_amp_chargingA]`
+- **Charging Line F**: `[prod_control].[dbo].[z_amp_chargingF]`
+
+## 🌐 Struktur Halaman & URL
+- **Portal Pemilihan**: `/` atau `/portal`
+- **Dashboard Line A**: `/charging/a`
+- **Dashboard Line F**: `/charging/f`
+- **API Realtime/Histori**: `/api/charging?line=A` atau `/api/charging?line=F`
 
 ## 🛠️ Persyaratan Sistem
 - PHP >= 8.2 (dengan ekstensi `sqlsrv` atau `pdo_sqlsrv`, `intl`, `mbstring`)
@@ -46,7 +58,7 @@ Dashboard Monitoring Ampere Charging A berbasis **CodeIgniter 4 (CI4)** dengan v
    ```
 
 4. **Jalankan Aplikasi**:
-   - Melalui Laragon: Buka `http://localhost/dashboard_charging/` atau `http://dashboard-charging.test/`
+   - Melalui Laragon: Buka `http://localhost/dashboard_charging/` atau `http://dashboard_charging.test/`
    - Melalui Spark:
      ```bash
      php spark serve

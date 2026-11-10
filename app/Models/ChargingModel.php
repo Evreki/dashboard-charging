@@ -10,17 +10,21 @@ class ChargingModel extends Model
     protected $table = 'z_amp_chargingA';
 
     /**
-     * Ambil data charging berdasarkan sirkuit, interval, dan filter tanggal opsional.
+     * Ambil data charging berdasarkan sirkuit, interval, filter tanggal, dan line (A / F).
      */
     public function getChargingData(
         string $circuit = 'Circuit 21',
         string $intervalStr = 'raw',
         ?string $startStr = null,
         ?string $endStr = null,
-        bool $isDemo = false
+        bool $isDemo = false,
+        string $line = 'A'
     ): array {
+        $lineClean = (strtoupper(trim($line)) === 'F') ? 'F' : 'A';
+        $tableName = ($lineClean === 'F') ? 'z_amp_chargingF' : 'z_amp_chargingA';
+
         if ($isDemo) {
-            return $this->generateDemoData($intervalStr, $startStr, $endStr);
+            return $this->generateDemoData($intervalStr, $startStr, $endStr, $lineClean);
         }
 
         $isHistorical = !empty($startStr) && !empty($endStr);
@@ -52,7 +56,7 @@ class ChargingModel extends Model
                             [created_at] as [time],
                             CAST([amp] as FLOAT) as [amp],
                             CAST([voltase] as FLOAT) as [voltase]
-                        FROM [prod_control].[dbo].[z_amp_chargingA]
+                        FROM [prod_control].[dbo].[{$tableName}]
                         WHERE [id] = ?
                           AND [created_at] >= ? 
                           AND [created_at] <= ?
@@ -65,7 +69,7 @@ class ChargingModel extends Model
                             DATEADD(minute, (DATEDIFF(minute, 0, [created_at]) / {$intervalMinutes}) * {$intervalMinutes}, 0) as [time],
                             AVG(CAST([amp] as FLOAT)) as [amp],
                             AVG(CAST([voltase] as FLOAT)) as [voltase]
-                        FROM [prod_control].[dbo].[z_amp_chargingA]
+                        FROM [prod_control].[dbo].[{$tableName}]
                         WHERE [id] = ?
                           AND [created_at] >= ? 
                           AND [created_at] <= ?
@@ -86,7 +90,7 @@ class ChargingModel extends Model
                         [created_at] as [time],
                         CAST([amp] as FLOAT) as [amp],
                         CAST([voltase] as FLOAT) as [voltase]
-                    FROM [prod_control].[dbo].[z_amp_chargingA]
+                    FROM [prod_control].[dbo].[{$tableName}]
                     WHERE [id] = ?
                     ORDER BY [time] DESC
                 ";
@@ -97,7 +101,7 @@ class ChargingModel extends Model
                         DATEADD(minute, (DATEDIFF(minute, 0, [created_at]) / {$intervalMinutes}) * {$intervalMinutes}, 0) as [time],
                         AVG(CAST([amp] as FLOAT)) as [amp],
                         AVG(CAST([voltase] as FLOAT)) as [voltase]
-                    FROM [prod_control].[dbo].[z_amp_chargingA]
+                    FROM [prod_control].[dbo].[{$tableName}]
                     WHERE [id] = ?
                     GROUP BY DATEADD(minute, (DATEDIFF(minute, 0, [created_at]) / {$intervalMinutes}) * {$intervalMinutes}, 0)
                     ORDER BY [time] DESC
@@ -110,16 +114,16 @@ class ChargingModel extends Model
             return $this->formatRows($rows);
 
         } catch (Throwable $e) {
-            log_message('error', 'Database Error in ChargingModel: ' . $e->getMessage());
+            log_message('error', "Database Error in ChargingModel ({$tableName}): " . $e->getMessage());
             return [
-                'error' => 'Koneksi Database Gagal: ' . $e->getMessage(),
+                'error' => "Koneksi Database Gagal ({$tableName}): " . $e->getMessage(),
                 'is_db_error' => true,
             ];
         }
     }
 
     /**
-     * Format data sesuai format asli index.php dan api.php
+     * Format data sesuai format index.php dan api.php
      */
     private function formatRows(array $rows): array
     {
@@ -144,7 +148,7 @@ class ChargingModel extends Model
     /**
      * Demo data generator saat server database offline/tidak terkoneksi di LAN
      */
-    private function generateDemoData(string $intervalStr, ?string $startStr, ?string $endStr): array
+    private function generateDemoData(string $intervalStr, ?string $startStr, ?string $endStr, string $line = 'A'): array
     {
         $data = [];
         $points = 40;
@@ -155,17 +159,19 @@ class ChargingModel extends Model
         if ($intervalStr === '1h')  $step = 3600;
 
         $startTime = $now - ($points * $step);
+        $ampOffset = ($line === 'F') ? 1.8 : 0.0;
+        $voltOffset = ($line === 'F') ? 3.0 : 0.0;
+
         for ($i = 0; $i < $points; $i++) {
             $timePoint = $startTime + ($i * $step);
-            $baseAmp = 15.0 + sin($i / 3) * 3 + (mt_rand(-5, 5) / 10);
-            $baseVolt = 220.0 + cos($i / 4) * 5 + (mt_rand(-5, 5) / 10);
+            $baseAmp = 15.0 + $ampOffset + sin($i / 3) * 3 + (mt_rand(-5, 5) / 10);
+            $baseVolt = 220.0 + $voltOffset + cos($i / 4) * 5 + (mt_rand(-5, 5) / 10);
             $data[] = [
                 'time'    => date('Y-m-d H:i:s', $timePoint),
-                'amp'     => round($baseAmp, 1),
-                'voltase' => round($baseVolt, 1),
+                'amp'     => round(max(0, $baseAmp), 1),
+                'voltase' => round(max(0, $baseVolt), 1),
             ];
         }
         return $data;
     }
 }
-

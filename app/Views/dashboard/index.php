@@ -3,20 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($title ?? 'Dashboard Monitoring - Amp Charging A') ?></title>
+    <title><?= esc($title ?? 'Dashboard Monitoring - Amp Charging ' . ($line ?? 'A')) ?></title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <?php 
+        $currentLine = strtoupper($line ?? 'A');
+        $primaryColor = ($currentLine === 'F') ? '#8b5cf6' : '#0ea5e9';
+        $primaryLight = ($currentLine === 'F') ? 'rgba(139, 92, 246, 0.12)' : 'rgba(14, 165, 233, 0.12)';
+        $primaryHover = ($currentLine === 'F') ? '#7c3aed' : '#0284c7';
+    ?>
 
     <style>
         :root {
             --bg-color: #f8fafc;
             --panel-bg: #ffffff;
             --border-color: #e2e8f0;
-            --primary: #0ea5e9;
-            --primary-light: rgba(14, 165, 233, 0.1);
+            --primary: <?= $primaryColor ?>;
+            --primary-light: <?= $primaryLight ?>;
+            --primary-hover: <?= $primaryHover ?>;
             --text-main: #0f172a;
             --text-muted: #64748b;
             --danger: #ef4444;
@@ -41,9 +49,84 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 2rem 1rem;
+            padding: 1.5rem 1rem 2.5rem;
         }
 
+        /* Top Navigation Bar */
+        .top-nav {
+            width: 100%;
+            max-width: 95%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding: 0 0.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .btn-portal-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-portal-back:hover {
+            color: var(--text-main);
+            background: #f1f5f9;
+            transform: translateX(-2px);
+        }
+
+        /* Line Switcher Tabs */
+        .line-switcher {
+            display: flex;
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 12px;
+            gap: 4px;
+        }
+
+        .line-tab {
+            padding: 6px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .line-tab.active-a {
+            background: #0ea5e9;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(14, 165, 233, 0.4);
+        }
+
+        .line-tab.active-f {
+            background: #8b5cf6;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4);
+        }
+
+        .line-tab:not(.active-a):not(.active-f):hover {
+            background: rgba(255, 255, 255, 0.6);
+            color: var(--text-main);
+        }
+
+        /* Main Header */
         header {
             width: 100%;
             max-width: 95%;
@@ -62,6 +145,18 @@
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .line-badge-hero {
+            font-size: 0.8rem;
+            font-weight: 800;
+            background: var(--primary);
+            color: #ffffff;
+            padding: 3px 10px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px var(--primary-light);
         }
 
         .ci4-badge {
@@ -182,11 +277,11 @@
         .btn-primary {
             background-color: var(--primary);
             color: white;
-            box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         }
 
         .btn-primary:hover {
-            background-color: #0284c7;
+            background-color: var(--primary-hover);
             transform: translateY(-1px);
         }
 
@@ -350,15 +445,46 @@
             header, .card-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
             .current-value-box { text-align: left; }
             .filter-card { flex-direction: column; align-items: stretch; }
+            .top-nav { flex-direction: column; align-items: stretch; }
         }
     </style>
 </head>
 <body>
 
+    <!-- Top Navigation Bar -->
+    <div class="top-nav">
+        <a href="<?= site_url('/') ?>" class="btn-portal-back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Kembali ke Portal Pemilihan</span>
+        </a>
+
+        <!-- Fast Switcher between Line A and Line F -->
+        <div class="line-switcher">
+            <a href="<?= site_url('charging/a') ?>" class="line-tab <?= ($currentLine === 'A') ? 'active-a' : '' ?>">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="16" height="10" rx="2"></rect><line x1="22" y1="11" x2="22" y2="13"></line></svg>
+                <span>Charging Line A</span>
+            </a>
+            <a href="<?= site_url('charging/f') ?>" class="line-tab <?= ($currentLine === 'F') ? 'active-f' : '' ?>">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                <span>Charging Line F</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Header -->
     <header>
         <div class="header-title">
-            <h1>Production Dashboard <span class="ci4-badge">CI4</span></h1>
-            <div class="subtitle">Ampere Charging A Monitoring System</div>
+            <h1>
+                Production Dashboard 
+                <span class="line-badge-hero">Line <?= esc($currentLine) ?></span>
+                <span class="ci4-badge">CI4</span>
+            </h1>
+            <div class="subtitle">
+                Ampere Charging <?= esc($currentLine) ?> Monitoring System &bull; Tabel: <code>z_amp_charging<?= esc($currentLine) ?></code>
+            </div>
         </div>
         <div class="header-actions">
             <button class="btn btn-demo" id="btnToggleDemo" onclick="toggleDemoMode()" title="Toggle Simulasi Data saat offline">
@@ -437,7 +563,7 @@
             <div class="card-header">
                 <div>
                     <div class="card-title">
-                        Trend Data - <span id="currentCircuitTitle" style="color: var(--primary);">Circuit 21</span>
+                        Trend Data Line <?= esc($currentLine) ?> - <span id="currentCircuitTitle" style="color: var(--primary);">Circuit 21</span>
                     </div>
                     <div class="card-subtitle" id="chartSubtitle">Menampilkan data real-time terakhir</div>
                 </div>
@@ -474,6 +600,9 @@
     </div>
 
     <script>
+        const CURRENT_LINE = '<?= esc($currentLine) ?>';
+        const PRIMARY_CHART_COLOR = '<?= $primaryColor ?>';
+        
         const API_BASE_URL = (() => {
             const configuredUrl = '<?= site_url('api/charging') ?>';
             try {
@@ -487,6 +616,7 @@
                 return 'api/charging';
             }
         })();
+
         const circuitSelect = document.getElementById('circuit');
         let isLiveMode = true;
         let fetchIntervalId = null;
@@ -577,7 +707,7 @@
                 toolbar: { show: true, tools: { download: true, selection: true, zoom: true, pan: true } },
                 animations: { enabled: true, easing: 'easeinout', speed: 800 }
             },
-            colors: ['#0ea5e9', '#10b981'],
+            colors: [PRIMARY_CHART_COLOR, '#10b981'],
             fill: {
                 type: 'gradient',
                 gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.0, stops: [0, 100] }
@@ -593,11 +723,11 @@
             yaxis: [
                 {
                     seriesName: 'Ampere',
-                    labels: { style: { colors: '#0ea5e9', fontFamily: 'Inter' }, formatter: (val) => val.toFixed(1) },
+                    labels: { style: { colors: PRIMARY_CHART_COLOR, fontFamily: 'Inter' }, formatter: (val) => val.toFixed(1) },
                     min: 0,
                     max: function(max) { return max > 22 ? max : 22; },
                     tickAmount: 11,
-                    title: { text: 'Ampere (A)', style: { color: '#0ea5e9', fontFamily: 'Inter', fontWeight: 600 } }
+                    title: { text: 'Ampere (A)', style: { color: PRIMARY_CHART_COLOR, fontFamily: 'Inter', fontWeight: 600 } }
                 },
                 {
                     opposite: true,
@@ -630,7 +760,7 @@
                 const activeCircuit = document.getElementById('circuit').value;
                 const interval = document.getElementById('interval').value;
                 
-                let params = `?circuit=${encodeURIComponent(activeCircuit)}&interval=${interval}`;
+                let params = `?circuit=${encodeURIComponent(activeCircuit)}&interval=${interval}&line=${encodeURIComponent(CURRENT_LINE)}`;
                 if (isDemoMode) {
                     params += `&demo=1`;
                 }
@@ -776,4 +906,3 @@
     </script>
 </body>
 </html>
-
