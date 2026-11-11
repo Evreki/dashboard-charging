@@ -65,11 +65,11 @@ class ChargingModel extends Model
                             [created_at] as [time],
                             CAST([amp] as FLOAT) as [amp],
                             CAST([voltase] as FLOAT) as [voltase]
-                        FROM [prod_control].[dbo].[{$tableName}]
+                        FROM [prod_control].[dbo].[{$tableName}] WITH (NOLOCK)
                         WHERE [id] = ?
                           AND [created_at] >= ? 
                           AND [created_at] <= ?
-                        ORDER BY [time] ASC
+                        ORDER BY [created_at] ASC
                     ";
                     $query = $db->query($sql, [$circuit, $startStr, $endStr]);
                 } else {
@@ -78,7 +78,7 @@ class ChargingModel extends Model
                             DATEADD(minute, (DATEDIFF(minute, 0, [created_at]) / {$intervalMinutes}) * {$intervalMinutes}, 0) as [time],
                             AVG(CAST([amp] as FLOAT)) as [amp],
                             AVG(CAST([voltase] as FLOAT)) as [voltase]
-                        FROM [prod_control].[dbo].[{$tableName}]
+                        FROM [prod_control].[dbo].[{$tableName}] WITH (NOLOCK)
                         WHERE [id] = ?
                           AND [created_at] >= ? 
                           AND [created_at] <= ?
@@ -102,16 +102,16 @@ class ChargingModel extends Model
                 return [];
             }
 
-            // Mode LIVE
+            // Mode LIVE: WITH (NOLOCK) mencegah blocking saat mesin/logger sedang INSERT data
             if ($isRaw) {
                 $sql = "
                     SELECT TOP 60
                         [created_at] as [time],
                         CAST([amp] as FLOAT) as [amp],
                         CAST([voltase] as FLOAT) as [voltase]
-                    FROM [prod_control].[dbo].[{$tableName}]
+                    FROM [prod_control].[dbo].[{$tableName}] WITH (NOLOCK)
                     WHERE [id] = ?
-                    ORDER BY [time] DESC
+                    ORDER BY [created_at] DESC
                 ";
                 $query = $db->query($sql, [$circuit]);
             } else {
@@ -120,7 +120,7 @@ class ChargingModel extends Model
                         DATEADD(minute, (DATEDIFF(minute, 0, [created_at]) / {$intervalMinutes}) * {$intervalMinutes}, 0) as [time],
                         AVG(CAST([amp] as FLOAT)) as [amp],
                         AVG(CAST([voltase] as FLOAT)) as [voltase]
-                    FROM [prod_control].[dbo].[{$tableName}]
+                    FROM [prod_control].[dbo].[{$tableName}] WITH (NOLOCK)
                     WHERE [id] = ?
                     GROUP BY DATEADD(minute, (DATEDIFF(minute, 0, [created_at]) / {$intervalMinutes}) * {$intervalMinutes}, 0)
                     ORDER BY [time] DESC
@@ -175,6 +175,53 @@ class ChargingModel extends Model
             ];
         }
         return $chartData;
+    }
+
+    /**
+     * Anti-Pattern N+1 Query Prevention:
+     * Mengambil data status terakhir untuk banyak sirkuit (atau seluruh 110 sirkuit) sekaligus
+     * dalam 1 kali eksekusi query SQL tunggal menggunakan Window Function ROW_NUMBER().
+     * Menghilangkan 110 query terpisah di dalam looping PHP.
+     */
+    public function getCircuitsLatestBatch(array $circuitIds = [], string $line = 'A'): array
+    {
+        $lineClean = (strtoupper(trim($line)) === 'F') ? 'F' : 'A';
+        $tableName = ($lineClean === 'F') ? 'z_amp_chargingF' : 'z_amp_chargingA';
+
+        try {
+            $db = \Config\Database::connect();
+            
+            $whereClause = '';
+            $params = [];
+            if (!empty($circuitIds)) {
+                $placeholders = implode(',', array_fill(0, count($circuitIds), '?'));
+                $whereClause = "WHERE [id] IN ({$placeholders})";
+                $params = $circuitIds;
+            }
+
+            $sql = "
+                WITH RankedLogs AS (
+                    SELECT 
+                        [id],
+                        CAST([amp] as FLOAT) as [amp],
+                        CAST([voltase] as FLOAT) as [voltase],
+                        [created_at],
+                        ROW_NUMBER() OVER (PARTITION BY [id] ORDER BY [created_at] DESC) as [rn]
+                    FROM [prod_control].[dbo].[{$tableName}] WITH (NOLOCK)
+                    {$whereClause}
+                )
+                SELECT [id], [amp], [voltase], [created_at] as [time]
+                FROM RankedLogs
+                WHERE [rn] = 1
+                ORDER BY [id] ASC
+            ";
+
+            $query = $db->query($sql, $params);
+            return $this->formatRows($query->getResultArray());
+        } catch (Throwable $e) {
+            log_message('notice', "Batch circuits standby ({$tableName}): " . $e->getMessage());
+            return [];
+        }
     }
 
     /**

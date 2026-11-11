@@ -702,7 +702,9 @@
 
         const circuitSelect = document.getElementById('circuit');
         let isLiveMode = true;
-        let fetchIntervalId = null;
+        let isFetching = false;
+        let pollingTimer = null;
+        const POLL_INTERVAL = 5000; // Smart interval: 5 detik (optimal untuk telemetri industri)
         let isDemoMode = false;
         let currentLoadedData = [];
 
@@ -989,7 +991,28 @@
         const chart = new ApexCharts(document.querySelector("#chart"), options);
         chart.render();
 
+        function scheduleNextPoll() {
+            if (pollingTimer) clearTimeout(pollingTimer);
+            if (isLiveMode && !document.hidden) {
+                pollingTimer = setTimeout(fetchData, POLL_INTERVAL);
+            }
+        }
+
+        // Page Visibility API: Stop polling saat user minimize browser atau pindah tab
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (pollingTimer) clearTimeout(pollingTimer);
+            } else {
+                if (isLiveMode && !isFetching) {
+                    fetchData();
+                }
+            }
+        });
+
         async function fetchData() {
+            if (isFetching) return; // Request guard: anti-stacking / anti-traffic jam
+            isFetching = true;
+
             try {
                 const activeCircuit = document.getElementById('circuit').value;
                 const interval = document.getElementById('interval').value;
@@ -1059,10 +1082,11 @@
                     const chartDataAmp = rows.map(item => [new Date(item.time).getTime(), item.amp]);
                     const chartDataVolt = rows.map(item => [new Date(item.time).getTime(), item.voltase]);
                     
+                    // animate: false saat polling berkala menghemat CPU/GPU browser secara drastis
                     chart.updateSeries([
                         { name: 'Ampere', data: chartDataAmp },
                         { name: 'Voltase', data: chartDataVolt }
-                    ]);
+                    ], false);
 
                     const latestAmp = rows[rows.length - 1].amp;
                     const latestVolt = rows[rows.length - 1].voltase;
@@ -1081,7 +1105,7 @@
 
                     updateStatusDisplay(latestAmp, latestVolt);
                 } else {
-                    chart.updateSeries([{ data: [] }, { data: [] }]);
+                    chart.updateSeries([{ data: [] }, { data: [] }], false);
                     document.getElementById('currentAmp').innerText = '--';
                     document.getElementById('currentVoltase').innerText = '--';
                     updateStatusDisplay(null, null);
@@ -1091,6 +1115,9 @@
                 }
             } catch (error) {
                 console.warn("Auto-detect polling:", error);
+            } finally {
+                isFetching = false;
+                scheduleNextPoll();
             }
         }
 
@@ -1119,7 +1146,7 @@
             }
 
             isLiveMode = false;
-            clearInterval(fetchIntervalId);
+            if (pollingTimer) clearTimeout(pollingTimer);
             
             const badge = document.getElementById('liveIndicator');
             badge.style.background = 'rgba(100, 116, 139, 0.1)';
@@ -1148,14 +1175,8 @@
             document.getElementById('btnReset').style.display = 'none';
             document.getElementById('chartSubtitle').innerText = 'Menampilkan data real-time terakhir';
 
+            if (pollingTimer) clearTimeout(pollingTimer);
             fetchData();
-            
-            if (fetchIntervalId) clearInterval(fetchIntervalId);
-            fetchIntervalId = setInterval(() => {
-                if (isLiveMode) {
-                    fetchData();
-                }
-            }, 3000);
         }
 
         function showError(msg) {
@@ -1165,15 +1186,9 @@
             err.style.display = 'flex';
         }
 
-        // Inisialisasi awal
+        // Inisialisasi awal (otomatis menjadwalkan polling berikutnya secara pintar)
         document.getElementById('chartSubtitle').innerText = 'Menampilkan data real-time terakhir';
         fetchData();
-        
-        fetchIntervalId = setInterval(() => {
-            if (isLiveMode) {
-                fetchData();
-            }
-        }, 3000);
     </script>
 </body>
 </html>
